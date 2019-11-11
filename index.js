@@ -2,10 +2,19 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { Pool, Client } = require('pg');
 
 const app = express();
 
 dotenv.config({ path: '.env' });
+
+const db = new Client({
+  connectionString: process.env.URI,
+});
+
+db.connect()
+  .then(() => console.log("CONNECTED TO DB"))
+  .catch((err) => console.log(err));
 
 const PORT = process.env.PORT || 3000;
 
