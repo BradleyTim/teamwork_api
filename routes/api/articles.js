@@ -12,12 +12,16 @@ router.post('/articles', (req, res) => {
   db.postArticle(req, res);
 });
 
-router.get('/article/:articleId', (req, res) => {
-  db.getArtcile(req, res);
+router.get('/articles/:articleId', (req, res) => {
+  db.getArticle(req, res);
 });
 
-router.delete('/article/:articleId', (req, res) => {
-  db.deleteArtcile(req, res);
+router.patch('/articles/:articleId', (req, res) => {
+  db.patchArticle(req, res);
+});
+
+router.delete('/articles/:articleId', (req, res) => {
+  db.deleteArticle(req, res);
 });
 
 module.exports = router;
