@@ -5,7 +5,7 @@ const db = require('../../db/users');
 
 
 router.get('/users', (req, res) => {
-  db.getEmployees(req, res);
+  db.getUsers(req, res);
 });
 
 router.post('/create-users', (req, res) => {
