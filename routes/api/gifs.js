@@ -31,11 +31,11 @@ router.get('/gifs', (req, res) => {
 });
 
 router.get('/gifs/:gifId', (req, res) => {
-  db.getGif(req, res);
+	db.getGif(req, res);
 });
 
 router.delete('/gifs/:gifId', (req, res) => {
-  db.deleteGif(req, res);
+	db.deleteGif(req, res);
 });
 
 module.exports = router;

@@ -106,8 +106,9 @@ const postArticle = async (req, res) => {
   try {
     const queryValues = Object.values(req.body);
     queryValues.push(new Date());
+    console.log(queryValues);
     const queryText =
-      "INSERT INTO articles(title, content, created_on) VALUES($1, $2, $3) RETURNING article_id";
+      "INSERT INTO articles(title, content, author_id, created_on) VALUES($1, $2, $3, $4) RETURNING article_id, title";
     console.log(queryValues);
     await db.query("BEGIN");
     const result = await db.query(queryText, queryValues);
@@ -193,9 +194,11 @@ const postGif = async (req, res) => {
   try {
     const title = req.body.title;
     const url = req.file.url;
-    const queryValues = [title, url, new Date()];
+    console.log(url);
+    const authorId = parseInt(req.body.authorId);
+    const queryValues = [title, url, authorId, new Date()];
     const queryText =
-      "INSERT INTO gifs(title, image_url, created_on) VALUES($1, $2, $3) RETURNING gif_id, image_url, title, created_on";
+      "INSERT INTO gifs(title, image_url, author_id, created_on) VALUES($1, $2, $3, $4) RETURNING gif_id, image_url, title, created_on";
     console.log(queryValues);
     await db.query("BEGIN");
     const result = await db.query(queryText, queryValues);
@@ -269,6 +272,49 @@ const getGif = (req, res) => {
     });
 }
 
+// FEED RESOURCE
+
+const getFeed = async (req, res) => {
+  try {
+    const articlesResult = await db.query("SELECT * FROM articles ORDER BY created_on DESC");
+    const gifsResult = await db.query("SELECT * FROM gifs ORDER BY created_on DESC");
+    const data = [...articlesResult.rows, ...gifsResult.rows].sort((a,b) => new Date(b.created_on) - new Date(a.created_on));
+    res.status(200).json({
+      status: "success",
+      data: mapData(data),
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      error: error.stack
+    });
+  }
+};
+
+// map data
+function mapData(data) {
+  data = data.map((item) => {
+    if(item.hasOwnProperty('gif_id')) {
+      return {
+        id: item.gif_id,
+        createdOn: item.created_on,
+        url: item.image_url,
+        title: item.title,
+        authorId: item.author_id,
+      }
+    } else {
+      return {
+        id: item.article_id,
+        createdOn: item.created_on,
+        article: item.content,
+        title: item.title,
+        authorId: item.author_id,
+      }
+    }
+  });
+  return data;
+}
+
 
 module.exports = {
   getUsers,
@@ -281,5 +327,6 @@ module.exports = {
   deleteArticle,
   postGif,
   deleteGif,
-  getGif
+  getGif,
+  getFeed
 };
