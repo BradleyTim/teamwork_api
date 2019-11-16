@@ -169,7 +169,7 @@ const deleteArticle = async (req, res) => {
     const result = await db.query(queryText, [articleId]);
     await db.query("COMMIT");
     console.log(result.rows);
-    res.status(201).json({
+    res.status(200).json({
       status: "success",
       data: {
         message: "Article Successfully Deleted",
@@ -187,6 +187,89 @@ const deleteArticle = async (req, res) => {
   }
 }
 
+// GIFS RESOURCES
+
+const postGif = async (req, res) => {
+  try {
+    const title = req.body.title;
+    const url = req.file.url;
+    const queryValues = [title, url, new Date()];
+    const queryText =
+      "INSERT INTO gifs(title, image_url, created_on) VALUES($1, $2, $3) RETURNING gif_id, image_url, title, created_on";
+    console.log(queryValues);
+    await db.query("BEGIN");
+    const result = await db.query(queryText, queryValues);
+    await db.query("COMMIT");
+    console.log(result.rows);
+    res.status(201).json({
+      status: "success",
+      data: {
+        message: "Gif Image Successfully Posted",
+        gifId: result.rows[0].gif_id,
+        createdOn: result.rows[0].created_on,
+        title: result.rows[0].title,
+        imageUrl: result.rows[0].image_url,
+      },
+    });
+  } catch (error) {
+    await db.query("ROLLBACK");
+    res.status(400).json({
+      status: "error",
+      error: error
+    });
+  }
+}
+
+const deleteGif = async (req, res) => {
+  try {
+    const gifId = req.params.gifId;
+    const queryText =
+      "DELETE FROM gifs WHERE gif_id=$1 RETURNING gif_id, title, created_on";
+    await db.query("BEGIN");
+    const result = await db.query(queryText, [gifId]);
+    await db.query("COMMIT");
+    console.log(result.rows);
+    res.status(200).json({
+      status: "success",
+      data: {
+        message: "Gif Successfully Deleted",
+        gifId: result.rows[0].gif_id,
+        createdOn: result.rows[0].created_on,
+        title:result.rows[0].title,
+      },
+    });
+  } catch (error) {
+    await db.query("ROLLBACK");
+    res.status(400).json({
+      status: "error",
+      error: error
+    });
+  }
+}
+
+const getGif = (req, res) => {
+  db.query("SELECT * FROM gifs WHERE gif_id=$1", [req.params.gifId])
+    .then(result => {
+      res.status(200).json({
+        status: "success",
+        data: {
+          id: result.rows[0].gif_id,
+          createdOn: result.rows[0].created_on,
+          title: result.rows[0].title,
+          url: result.rows[0].image_url,
+          comments: [],
+        }
+      });
+    })
+    .catch(error => {
+      res.json({
+        status: "error",
+        error: error.stack
+      });
+    });
+}
+
+
 module.exports = {
   getUsers,
   postUser,
@@ -195,5 +278,8 @@ module.exports = {
   getArticle,
   postArticle,
   patchArticle,
-  deleteArticle
+  deleteArticle,
+  postGif,
+  deleteGif,
+  getGif
 };

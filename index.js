@@ -19,6 +19,7 @@ app.use(express.urlencoded({
 
 app.use('/api/v1', require('./routes/api/users'));
 app.use('/api/v1', require('./routes/api/articles'));
+app.use('/api/v1', require('./routes/api/gifs'));
 
 app.use('/', (req, res, next) => {
   res.status(200).send('<h1 style="text-align: center">TEAMWORK API HOME</h1>');
