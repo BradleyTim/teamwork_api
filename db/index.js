@@ -1,5 +1,6 @@
 const { Client } = require("pg");
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const db = new Client({
   connectionString: process.env.URI
@@ -72,6 +73,55 @@ const createUser = async (req, res) => {
           await db.query("ROLLBACK");
           throw error;
         }
+    }
+  } catch(error) {
+    throw error;
+  }
+}
+
+const signin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    let queryText = "SELECT * FROM users WHERE email=$1";
+    let queryValues = [email];
+
+    let result = await db.query(queryText, queryValues);
+
+    if(!result.rows[0]) {
+      res.status(404).json({
+        status: 'error',
+        error: 'User not found', 
+      });
+    }
+
+    console.log(result.rows);
+
+    const isMatch = await bcrypt.compare(password, result.rows[0].password);
+    if(isMatch) {
+      const payload = {
+        id: result.rows[0].id,
+        email: result.rows[0].email
+      };
+      jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: 3600}, (error, token) => {
+        if(error) {
+          res.status(400).json({
+            status: 'error',
+            meassage: 'No Token Authorization',
+          });
+        }
+        res.status(200).json({
+          status: 'success',
+          data: {
+            token: 'Bearer ' + token,
+            userId: result.rows[0].id,
+          }
+        });
+      });
+    } else {
+      res.status(404).json({
+        status: 'error',
+        error: 'Incorrect Password',
+      });
     }
   } catch(error) {
     throw error;
@@ -372,6 +422,7 @@ function mapData(data) {
 module.exports = {
   getUsers,
   createUser,
+  signin,
   postUser,
   getUser,
   getArticles,
