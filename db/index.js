@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const bcrypt = require('bcryptjs');
 
 const db = new Client({
   connectionString: process.env.URI
@@ -8,7 +9,7 @@ db.connect()
   .then(() => console.log("CONNECTED TO DB"))
   .catch(err => console.log(err));
 
-// USER QUERIES
+// LOGIN AND REGISTER RESOURCES
 
 const getUsers = async (req, res) => {
   try {
@@ -25,11 +26,63 @@ const getUsers = async (req, res) => {
   }
 };
 
+const createUser = async (req, res) => {
+  try {
+    let errors = [];
+
+    let queryText = "SELECT * FROM users WHERE email=$1";
+    let queryValues = [req.body.email];
+
+    let result = await db.query(queryText, queryValues);
+
+    if(result.rows[0]) {
+      errors.push({ msg: 'Employee is already registered' });
+      res.status(400).json({
+          status: "error",
+          error: "Employee already exist",
+      });
+    } else {
+      try {
+        let salt = bcrypt.genSaltSync(10);
+        req.body.password = bcrypt.hashSync(req.body.password, salt);
+
+        let queryValues = Object.values(req.body);
+
+        if(queryValues.length !== 7) {
+            errors.push({ msg: 'Please fill in all fields' });
+        }
+
+        if(req.body.password.length < 6) {
+          errors.push({ msg: 'password should be at least 6 characters' })
+        }
+        const queryText ="INSERT INTO users(firstName, lastName, password, gender, jobRole, department, address, email) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id";
+          console.log(queryValues);
+          await db.query("BEGIN");
+          const result = await db.query(queryText, queryValues);
+          await db.query("COMMIT");
+          res.status(201).json({
+            status: "success",
+            data: {
+              message: 'User Created Successfully',
+              userId: result.rows[0].id,
+              token: ''
+            },
+          });
+        } catch (error) {
+          await db.query("ROLLBACK");
+          throw error;
+        }
+    }
+  } catch(error) {
+    throw error;
+  }
+}
+
 const postUser = async (req, res) => {
   try {
     const queryValues = Object.values(req.body);
     const queryText =
-      "INSERT INTO users(firstName, lastName, password, gender, jobRole, department, address) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id";
+      "INSERT INTO users(firstName, lastName, password, gender, jobRole, department, address, email) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id";
     console.log(queryValues);
     await db.query("BEGIN");
     const result = await db.query(queryText, queryValues);
@@ -318,6 +371,7 @@ function mapData(data) {
 
 module.exports = {
   getUsers,
+  createUser,
   postUser,
   getUser,
   getArticles,
