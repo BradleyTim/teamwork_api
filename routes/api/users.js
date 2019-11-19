@@ -1,24 +1,45 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const passport = require('passport');
 
 const db = require('../../db/index');
+const createUserValidation = require('../../validation/create-user');
+const signInUserValidation = require('../../validation/signin');
 
 
-// router.get('/users', (req, res) => {
-//   db.getUsers(req, res);
-// });
+router.get('/users', passport.authenticate('jwt', { session: false }), (req, res) => {
+  db.getUsers(req, res);
+});
 
-// router.get('/users/:userId', (req, res) => {
-//   db.getUser(req, res);
-// });
+router.get('/users/:userId', passport.authenticate('jwt', { session: false }), (req, res) => {
+  db.getUser(req, res);
+});
 
 router.post('/create-user', (req, res) => {
-	db.createUser(req, res);
+	const { errors, isValid } = createUserValidation(req.body);
+	try {
+		if(!isValid) {
+			res.status(400).json(errors);
+		}
+
+		db.createUser(req, res);
+	} catch(error) {
+		throw error;
+	}
 });
 
 router.post('/signin', (req, res) => {
-	db.signin(req, res);
+	const { errors, isValid } = signInUserValidation(req.body);
+	try {
+		if(!isValid) {
+			res.status(400).json(errors);
+		}
+
+		db.signin(req, res);
+	} catch(error) {
+		throw error;
+	}
 });
 
 module.exports = router;

@@ -11,7 +11,6 @@ db.connect()
   .catch(err => console.log(err));
 
 // LOGIN AND REGISTER RESOURCES
-
 const getUsers = async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM users");
@@ -44,6 +43,7 @@ const createUser = async (req, res) => {
       });
     } else {
       try {
+
         let salt = bcrypt.genSaltSync(10);
         req.body.password = bcrypt.hashSync(req.body.password, salt);
 
@@ -56,6 +56,7 @@ const createUser = async (req, res) => {
         if(req.body.password.length < 6) {
           errors.push({ msg: 'password should be at least 6 characters' })
         }
+
         const queryText ="INSERT INTO users(firstName, lastName, password, gender, jobRole, department, address, email) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id";
           console.log(queryValues);
           await db.query("BEGIN");
@@ -106,7 +107,7 @@ const signin = async (req, res) => {
         if(error) {
           res.status(400).json({
             status: 'error',
-            meassage: 'No Token Authorization',
+            message: 'No Token Authorization',
           });
         }
         res.status(200).json({
@@ -153,9 +154,18 @@ const postUser = async (req, res) => {
 const getUser = (req, res) => {
   db.query("SELECT * FROM users WHERE id=$1", [req.params.userId])
     .then(result => {
+      const {id, firstname, lastname, gender, jobrole, department, address} = result.rows[0];
       res.status(200).json({
         status: "success",
-        employee: result.rows
+        user: {
+          id,
+          firstname,
+          lastname,
+          gender,
+          jobrole,
+          department,
+          address
+        }
       });
     })
     .catch(error => {
@@ -166,8 +176,7 @@ const getUser = (req, res) => {
     });
 }
 
-// ARTICLES QUERIES 
-
+// ARTICLES RESOURCES
 const getArticles = async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM articles");
@@ -292,7 +301,6 @@ const deleteArticle = async (req, res) => {
 }
 
 // GIFS RESOURCES
-
 const postGif = async (req, res) => {
   try {
     const title = req.body.title;
@@ -376,7 +384,6 @@ const getGif = (req, res) => {
 }
 
 // FEED RESOURCE
-
 const getFeed = async (req, res) => {
   try {
     const articlesResult = await db.query("SELECT * FROM articles ORDER BY created_on DESC");
@@ -394,7 +401,7 @@ const getFeed = async (req, res) => {
   }
 };
 
-// map data
+// map data callback function
 function mapData(data) {
   data = data.map((item) => {
     if(item.hasOwnProperty('gif_id')) {
@@ -418,7 +425,7 @@ function mapData(data) {
   return data;
 }
 
-
+// EXPORT ALL RESOURCES
 module.exports = {
   getUsers,
   createUser,

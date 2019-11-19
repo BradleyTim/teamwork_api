@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { Pool, Client } = require('pg');
+const passport = require('passport');
 
 const app = express();
 
@@ -16,6 +17,9 @@ app.use(express.json());
 app.use(express.urlencoded({
   extended: false,
 }));
+
+app.use(passport.initialize());
+require('./config/passport')(passport);
 
 app.use('/api/v1', require('./routes/api/users'));
 app.use('/api/v1', require('./routes/api/articles'));
