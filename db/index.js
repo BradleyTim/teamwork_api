@@ -58,24 +58,46 @@ const createUser = async (req, res) => {
         }
 
         const queryText ="INSERT INTO users(firstName, lastName, password, gender, jobRole, department, address, email) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id";
-          console.log(queryValues);
-          await db.query("BEGIN");
-          const result = await db.query(queryText, queryValues);
-          await db.query("COMMIT");
+        console.log(queryValues);
+        await db.query("BEGIN");
+        const result = await db.query(queryText, queryValues);
+        await db.query("COMMIT");
+        //---------------------------------------
+        jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: 3600}, (error, token) => {
+          if(error) {
+            res.status(400).json({
+              status: 'error',
+              message: 'No Token Authorization',
+            });
+          }
           res.status(201).json({
-            status: "success",
+            status: 'success',
             data: {
               message: 'User Created Successfully',
+              token: 'Bearer ' + token,
               userId: result.rows[0].id,
-              token: ''
-            },
+            }
           });
+        });
+        //---------------------------------------
         } catch (error) {
           await db.query("ROLLBACK");
+          // throw error;
+          res.status(400).json({
+            status: 'error',
+            error: error,
+          });
+
           throw error;
         }
     }
   } catch(error) {
+    // throw error;
+    res.status(400).json({
+      status: 'error',
+      error: error,
+    });
+
     throw error;
   }
 }
@@ -125,7 +147,10 @@ const signin = async (req, res) => {
       });
     }
   } catch(error) {
-    throw error;
+    res.status(404).json({
+      status: 'error',
+      error: error,
+    });
   }
 }
 
@@ -193,8 +218,18 @@ const getArticles = async (req, res) => {
 };
 
 const getArticle = (req, res) => {
-  db.query("SELECT * FROM articles WHERE article_id=$1", [req.params.articleId])
+  const queryText = 'SELECT articles.article_id, articles.title, articles.content, article_comments.comment, article_comments.comment_id, article_comments.author_id, articles.created_on FROM articles INNER JOIN article_comments ON articles.article_id=article_comments.article_id WHERE articles.article_id=$1;'
+  db.query(queryText, [req.params.articleId])
     .then(result => {
+      console.log(result.rows);
+      const comments = result.rows.map((article) => {
+        return {
+          commentId: article.comment_id,
+          comment: article.comment,
+          authorId: article.author_id,
+        }
+      });
+      console.log(comments);
       res.status(200).json({
         status: "success",
         data: {
@@ -202,7 +237,7 @@ const getArticle = (req, res) => {
           createdOn: result.rows[0].created_on,
           title: result.rows[0].title,
           article: result.rows[0].content,
-          comments: [],
+          comments: comments,
         }
       });
     })
@@ -300,6 +335,27 @@ const deleteArticle = async (req, res) => {
   }
 }
 
+const postArticleComment = async (req, res) => {
+  try {
+    const queryValues = Object.values(req.body);
+    queryValues.push(new Date());
+    console.log(queryValues);
+    const queryText = "INSERT INTO article_comments(comment, author_id, article_id, created_on) VALUES($1, $2, $3, $4)";
+    console.log(queryValues);
+    await db.query("BEGIN");
+    const result = await db.query(queryText, queryValues);
+    await db.query("COMMIT");
+    // console.log(result.rows);
+    getArticleComments(req, res);
+  } catch (error) {
+    await db.query("ROLLBACK");
+    res.status(400).json({
+      status: "error",
+      error: error
+    });
+  }
+}
+
 // GIFS RESOURCES
 const postGif = async (req, res) => {
   try {
@@ -362,8 +418,17 @@ const deleteGif = async (req, res) => {
 }
 
 const getGif = (req, res) => {
-  db.query("SELECT * FROM gifs WHERE gif_id=$1", [req.params.gifId])
+  db.query('SELECT gifs.gif_id, gifs.title, gifs.image_url, gif_comments.comment, gif_comments.comment_id, gif_comments.author_id, gifs.created_on FROM gifs INNER JOIN gif_comments ON gifs.gif_id=gif_comments.gif_id WHERE gifs.gif_id=$1;', [req.params.gifId])
     .then(result => {
+      console.log(result.rows);
+      const comments = result.rows.map((gif) => {
+        return {
+          commentId: gif.comment_id,
+          comment: gif.comment,
+          authorId: gif.author_id,
+        }
+      });
+      console.log(comments);
       res.status(200).json({
         status: "success",
         data: {
@@ -371,7 +436,7 @@ const getGif = (req, res) => {
           createdOn: result.rows[0].created_on,
           title: result.rows[0].title,
           url: result.rows[0].image_url,
-          comments: [],
+          comments: comments,
         }
       });
     })
@@ -381,6 +446,27 @@ const getGif = (req, res) => {
         error: error.stack
       });
     });
+}
+
+const postGifComment = async (req, res) => {
+  try {
+    const queryValues = Object.values(req.body);
+    queryValues.push(new Date());
+    console.log(queryValues);
+    const queryText = "INSERT INTO gif_comments(comment, author_id, gif_id, created_on) VALUES($1, $2, $3, $4)";
+    console.log(queryValues);
+    await db.query("BEGIN");
+    const result = await db.query(queryText, queryValues);
+    await db.query("COMMIT");
+    // console.log(result.rows);
+    getGifComments(req, res);
+  } catch (error) {
+    await db.query("ROLLBACK");
+    res.status(400).json({
+      status: "error",
+      error: error
+    });
+  }
 }
 
 // FEED RESOURCE
@@ -401,7 +487,7 @@ const getFeed = async (req, res) => {
   }
 };
 
-// map data callback function
+// map data callback helper function
 function mapData(data) {
   data = data.map((item) => {
     if(item.hasOwnProperty('gif_id')) {
@@ -425,6 +511,50 @@ function mapData(data) {
   return data;
 }
 
+// postArticleComments helper function
+const getArticleComments = async (req, res) => {
+  try {
+    const commentData = await db.query('SELECT articles.title, articles.content, article_comments.comment, article_comments.created_on FROM articles INNER JOIN article_comments ON articles.article_id=article_comments.article_id WHERE article_comments.comment=$1;', [req.body.comment]);
+    console.log(commentData);
+    res.status(201).json({
+      status: 'Success',
+      data: {
+        message: 'Comment succesfully created',
+        createdOn: commentData.rows[0].created_on,
+        articleTitle: commentData.rows[0].title,
+        article: commentData.rows[0].content,
+        comment: commentData.rows[0].comment
+      }
+    });
+  } catch(error) {
+    res.status(400).json({
+      status: 'error',
+      error: error,
+    });
+  }
+}
+
+const getGifComments = async (req, res) => {
+  try {
+    const commentData = await db.query('SELECT gifs.title, gif_comments.comment, gif_comments.created_on FROM gifs INNER JOIN gif_comments ON gifs.gif_id=gif_comments.gif_id WHERE gif_comments.comment=$1;', [req.body.comment]);
+    console.log(commentData);
+    res.status(201).json({
+      status: 'Success',
+      data: {
+        message: 'Comment succesfully created',
+        createdOn: commentData.rows[0].created_on,
+        gifTitle: commentData.rows[0].title,
+        comment: commentData.rows[0].comment
+      }
+    });
+  } catch(error) {
+    res.status(400).json({
+      status: 'error',
+      error: error,
+    });
+  }
+}
+
 // EXPORT ALL RESOURCES
 module.exports = {
   getUsers,
@@ -437,8 +567,10 @@ module.exports = {
   postArticle,
   patchArticle,
   deleteArticle,
+  postArticleComment,
   postGif,
   deleteGif,
   getGif,
+  postGifComment,
   getFeed
 };

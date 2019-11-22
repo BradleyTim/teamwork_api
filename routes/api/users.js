@@ -17,8 +17,10 @@ router.get('/users/:userId', passport.authenticate('jwt', { session: false }), (
 });
 
 router.post('/create-user', (req, res) => {
-	const { errors, isValid } = createUserValidation(req.body);
+	
 	try {
+		const { errors, isValid } = createUserValidation(req.body);
+		
 		if(!isValid) {
 			res.status(400).json(errors);
 		}
@@ -30,8 +32,10 @@ router.post('/create-user', (req, res) => {
 });
 
 router.post('/signin', (req, res) => {
-	const { errors, isValid } = signInUserValidation(req.body);
+	
 	try {
+		const { errors, isValid } = signInUserValidation(req.body);
+
 		if(!isValid) {
 			res.status(400).json(errors);
 		}

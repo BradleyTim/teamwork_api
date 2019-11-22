@@ -3,6 +3,7 @@ const router = express.Router();
 const cloudinary = require('cloudinary');
 const multer = require("multer");
 const cloudinaryStorage = require("multer-storage-cloudinary");
+const passport = require('passport');
 
 const db = require('../../db/index');
 
@@ -21,20 +22,24 @@ const storage = cloudinaryStorage({
 
 const parser = multer({ storage: storage });
 
-router.post('/gifs', parser.single('image'), (req, res) => {
+router.post('/gifs/:gifId/comments', passport.authenticate('jwt', { session: false }), (req, res) => {
+	db.postGifComment(req, res);
+});
+
+router.post('/gifs', passport.authenticate('jwt', { session: false }), parser.single('image'), (req, res) => {
 	db.postGif(req, res);
 });
 
 router.get('/gifs', (req, res) => {
 	res.status(200).json({ message: 'Here are the gifs!'});
-  //db.getGif(req, res);
+	db.getGif(req, res);
 });
 
 router.get('/gifs/:gifId', (req, res) => {
 	db.getGif(req, res);
 });
 
-router.delete('/gifs/:gifId', (req, res) => {
+router.delete('/gifs/:gifId', passport.authenticate('jwt', { session: false }), (req, res) => {
 	db.deleteGif(req, res);
 });
 
