@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/BradleyTim/teamwork_api.svg?branch=master)](https://travis-ci.org/BradleyTim/teamwork_api) [![Coverage Status](https://coveralls.io/repos/github/BradleyTim/teamwork_api/badge.svg?branch=master)](https://coveralls.io/github/BradleyTim/teamwork_api?branch=master)
+
 # Teamwork API
 
 Teamwork is an internal social network for employees of an organization. The goal of this
