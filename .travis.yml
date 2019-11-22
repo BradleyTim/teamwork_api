@@ -1,15 +1,15 @@
 language: node_js
 node_js:
-  -10.15.1
+  - 10.15.1
 cache: npm
 
 before_install:
   - npm i -g npm@version-number
 
 install:
-  -npm ci
+  - npm ci
 
 script:
-  -npm start
-  -npm test
+  - npm start
+  - npm test
 
