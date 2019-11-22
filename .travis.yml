@@ -1,11 +1,12 @@
 language: node_js
 node_js:
-  -10.15.1
+  -"stable"
 cache: npm
 
 install:
   -npm ci
 
 script:
+  -npm start
   -npm test
 
