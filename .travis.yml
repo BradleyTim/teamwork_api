@@ -1,7 +1,10 @@
 language: node_js
 node_js:
-  -"stable"
+  -10.15.1
 cache: npm
+
+before_install:
+  - npm i -g npm@version-number
 
 install:
   -npm ci
