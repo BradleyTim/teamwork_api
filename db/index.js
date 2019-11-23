@@ -66,8 +66,8 @@ const createUser = async (req, res) => {
           status: "success",
           data: {
             message: "User Created Successfully",
-            token: "Bearer " + token,
-            userId: result.rows[0].id
+            token: req.headers.authorization,
+            userId: result.rows[0].id,
           }
         });
 
