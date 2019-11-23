@@ -62,34 +62,25 @@ const createUser = async (req, res) => {
         await db.query("BEGIN");
         const result = await db.query(queryText, queryValues);
         await db.query("COMMIT");
-        //---------------------------------------
-        jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: 3600}, (error, token) => {
-          if(error) {
-            res.status(400).json({
-              status: 'error',
-              message: 'No Token Authorization',
-            });
+        res.status(201).json({
+          status: "success",
+          data: {
+            message: "User Created Successfully",
+            token: "Bearer " + token,
+            userId: result.rows[0].id
           }
-          res.status(201).json({
-            status: 'success',
-            data: {
-              message: 'User Created Successfully',
-              token: 'Bearer ' + token,
-              userId: result.rows[0].id,
-            }
-          });
         });
-        //---------------------------------------
-        } catch (error) {
-          await db.query("ROLLBACK");
-          // throw error;
-          res.status(400).json({
-            status: 'error',
-            error: error,
-          });
 
-          throw error;
-        }
+      } catch (error) {
+        await db.query("ROLLBACK");
+        // throw error;
+        res.status(400).json({
+          status: 'error',
+          error: error,
+        });
+
+        throw error;
+      }
     }
   } catch(error) {
     // throw error;
@@ -108,9 +99,9 @@ const signin = async (req, res) => {
     let queryText = "SELECT * FROM users WHERE email=$1";
     let queryValues = [email];
 
-    let result = await db.query(queryText, queryValues);
+    const result = await db.query(queryText, queryValues);
 
-    if(!result.rows[0]) {
+    if (!result.rows[0]) {
       res.status(404).json({
         status: 'error',
         error: 'User not found', 

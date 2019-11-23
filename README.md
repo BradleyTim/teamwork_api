@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/BradleyTim/teamwork_api.svg?branch=master)](https://travis-ci.org/BradleyTim/teamwork_api) [![Coverage Status](https://coveralls.io/repos/github/BradleyTim/teamwork_api/badge.svg?branch=master)](https://coveralls.io/github/BradleyTim/teamwork_api?branch=master)
+[![Build Status](https://travis-ci.org/BradleyTim/teamwork_api.svg?branch=develop)](https://travis-ci.org/BradleyTim/teamwork_api) [![Coverage Status](https://coveralls.io/repos/github/BradleyTim/teamwork_api/badge.svg?branch=develop)](https://coveralls.io/github/BradleyTim/teamwork_api?branch=develop)
 
 # Teamwork API
 

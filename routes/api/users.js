@@ -16,32 +16,27 @@ router.get('/users/:userId', passport.authenticate('jwt', { session: false }), (
   db.getUser(req, res);
 });
 
-router.post('/create-user', (req, res) => {
-	
-	try {
+router.post('/auth/create-user', passport.authenticate('jwt', { session: false }), (req, res) => {
 		const { errors, isValid } = createUserValidation(req.body);
 		
-		if(!isValid) {
+		if (!isValid) {
 			res.status(400).json(errors);
 		}
 
 		db.createUser(req, res);
-	} catch(error) {
-		throw error;
-	}
 });
 
-router.post('/signin', (req, res) => {
+router.post('/auth/signin', (req, res) => {
 	
 	try {
 		const { errors, isValid } = signInUserValidation(req.body);
 
-		if(!isValid) {
+		if (!isValid) {
 			res.status(400).json(errors);
 		}
 
 		db.signin(req, res);
-	} catch(error) {
+	} catch (error) {
 		throw error;
 	}
 });
